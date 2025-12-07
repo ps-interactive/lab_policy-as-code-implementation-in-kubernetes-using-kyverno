@@ -1,0 +1,28 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-labels-audit
+  annotations:
+    policies.kyverno.io/title: Require Labels (Audit Mode)
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      This policy validates that all pods have required labels.
+      Running in Audit mode to verify Kyverno is working without blocking resources.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-for-labels
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "All pods should have 'app' and 'env' labels"
+        pattern:
+          metadata:
+            labels:
+              app: "?*"
+              env: "?*"
