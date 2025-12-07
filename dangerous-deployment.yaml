@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dangerous-app
+  labels:
+    app: dangerous-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dangerous-app
+  template:
+    metadata:
+      labels:
+        app: dangerous-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.24
+        securityContext:
+          capabilities:
+            add:
+              - CAP_SYS_ADMIN
+              - NET_BIND_SERVICE
