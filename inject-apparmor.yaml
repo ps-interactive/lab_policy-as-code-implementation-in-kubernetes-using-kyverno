@@ -19,7 +19,9 @@ spec:
             kinds:
               - Pod
       mutate:
-        patchStrategicMerge:
-          metadata:
-            annotations:
-              +(container.apparmor.security.beta.kubernetes.io/*): runtime/default
+        foreach:
+        - list: "request.object.spec.containers"
+          patchStrategicMerge:
+            metadata:
+              annotations:
+                +(container.apparmor.security.beta.kubernetes.io/{{ element.name }}): runtime/default
