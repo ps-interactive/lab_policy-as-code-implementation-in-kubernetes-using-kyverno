@@ -1,0 +1,32 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: inject-security-context
+  annotations:
+    policies.kyverno.io/title: Inject Secure SecurityContext
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Automatically injects a secure securityContext into pods that lack one.
+      Sets runAsNonRoot: true and runAsUser: 1000 to prevent privileged execution.
+spec:
+  background: true
+  rules:
+    - name: inject-security-context-containers
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      mutate:
+        patchStrategicMerge:
+          spec:
+            containers:
+            - (name): "*"
+              securityContext:
+                +(runAsNonRoot): true
+                +(runAsUser): 1000
+                +(allowPrivilegeEscalation): false
+                +(capabilities):
+                  drop:
+                  - ALL
