@@ -1,0 +1,25 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: inject-apparmor-profile
+  annotations:
+    policies.kyverno.io/title: Inject AppArmor Profile Annotation
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Automatically adds AppArmor runtime/default profile annotation to pods.
+      AppArmor restricts container host access and system calls.
+spec:
+  background: true
+  rules:
+    - name: add-apparmor-annotation
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            annotations:
+              +(container.apparmor.security.beta.kubernetes.io/*): runtime/default
