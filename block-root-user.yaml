@@ -1,0 +1,53 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-root-user
+  annotations:
+    policies.kyverno.io/title: Block Root User (UID 0)
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Blocks containers from running as root user (UID 0).
+      Running as root enables privilege escalation attacks.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: block-run-as-root-user
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "Containers cannot run as root user (runAsUser: 0) - this enables privilege escalation"
+        pattern:
+          spec:
+            =(ephemeralContainers):
+            - =(securityContext):
+                =(runAsUser): "!0"
+            =(initContainers):
+            - =(securityContext):
+                =(runAsUser): "!0"
+            containers:
+            - =(securityContext):
+                =(runAsUser): "!0"
+    - name: require-run-as-non-root
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "Containers must explicitly set runAsNonRoot: true in securityContext"
+        pattern:
+          spec:
+            =(ephemeralContainers):
+            - =(securityContext):
+                =(runAsNonRoot): true
+            =(initContainers):
+            - =(securityContext):
+                =(runAsNonRoot): true
+            containers:
+            - securityContext:
+                runAsNonRoot: true
