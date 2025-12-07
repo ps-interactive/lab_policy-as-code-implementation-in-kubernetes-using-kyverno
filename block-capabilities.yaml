@@ -1,0 +1,59 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-dangerous-capabilities
+  annotations:
+    policies.kyverno.io/title: Block Dangerous Linux Capabilities
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Blocks containers attempting to use dangerous Linux capabilities
+      like CAP_SYS_ADMIN or NET_ADMIN that enable container escapes.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: block-cap-sys-admin
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "Containers cannot request CAP_SYS_ADMIN capability - this enables container escapes and host compromise"
+        pattern:
+          spec:
+            =(ephemeralContainers):
+            - =(securityContext):
+                =(capabilities):
+                  X(add): "!CAP_SYS_ADMIN"
+            =(initContainers):
+            - =(securityContext):
+                =(capabilities):
+                  X(add): "!CAP_SYS_ADMIN"
+            containers:
+            - =(securityContext):
+                =(capabilities):
+                  X(add): "!CAP_SYS_ADMIN"
+    - name: block-net-admin
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      validate:
+        message: "Containers cannot request NET_ADMIN capability - this allows network manipulation and host access"
+        pattern:
+          spec:
+            =(ephemeralContainers):
+            - =(securityContext):
+                =(capabilities):
+                  X(add): "!NET_ADMIN"
+            =(initContainers):
+            - =(securityContext):
+                =(capabilities):
+                  X(add): "!NET_ADMIN"
+            containers:
+            - =(securityContext):
+                =(capabilities):
+                  X(add): "!NET_ADMIN"
